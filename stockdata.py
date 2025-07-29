@@ -1,51 +1,52 @@
-import yfinance as yf
-import csv
+import os
+import pandas as pd
+import numpy as np
+import glob
 
+# Path to your folder containing CSV files
+dataFolder = "Data/"
+summaryData = []
 
-stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
-fields = ["Stock Name", "PE Ratio", "Dividened Yields", "Market Cap", "Rolling Average"]
+# List all CSVs in the folder
+csvFiles = glob.glob(os.path.join(dataFolder, "*.csv"))
 
-desired_pe_ratio = 20  
-desired_dividend_yield = 0.02
-desired_market_cap = 10
-desired_moving_average = 0
+# For each stock CSV, extract stats
+for file in csvFiles:
+    stockName = os.path.basename(file).replace(".csv", "")
+    df = pd.read_csv(file, parse_dates=["date"])
 
-stock_data = []
+    df.sort_values("date", inplace=True)
+    df.dropna(inplace=True)
 
-def binary_convert(values):
-    returning = []
-    print(values)
-    for value in values:
-        returning.append(str(value))
+    # Calculate daily returns
+    df["return"] = df["close"].pct_change()
+    df["volatility"] = df["return"].rolling(window=20).std()
 
-    return returning
+    # 50-day and 200-day moving averages
+    df["ma_50"] = df["close"].rolling(window=50).mean()
+    df["ma_200"] = df["close"].rolling(window=200).mean()
 
-for stock_symbol in stock_symbols:
+    # Most recent values (for features)
+    latest = df.iloc[-1]
+    meanReturn = df["return"].mean()
+    stdReturn = df["return"].std()
+    latestVolatility = latest["volatility"]
+    ma50 = latest["ma_50"]
+    ma200 = latest["ma_200"]
 
-    stock = yf.Ticker(stock_symbol)
+    summaryData.append([
+        stockName,
+        round(meanReturn, 4),
+        round(stdReturn, 4),
+        round(latestVolatility, 4),
+        round(ma50, 2),
+        round(ma200, 2)
+    ])
 
-    historical_data = stock.history(period="1mo")
+# Save results
+summaryDf = pd.DataFrame(summaryData, columns=[
+    "Stock", "MeanReturn", "StdReturn", "Volatility", "MA50", "MA200"
+])
 
-    stock_info = stock.info
-
-    pe_ratio = stock.info['trailingPE']
-    volume = stock.info['volume']
-    market_cap = stock.info['marketCap']
-
-    print(str(pe_ratio))
-
-    #moving_average_50 = historical_data['Close'].rolling(window=50).mean()
-
-    binary_stock_data = binary_convert([stock_symbol,pe_ratio,volume,market_cap,1])
-    stock_data.append(binary_stock_data)
-    print(stock_data)
-
-try:
-    with open("stock_data.csv", 'w') as file:
-        csvwriter = csv.writer(file)
-        csvwriter.writerow(fields)
-        csvwriter.writerows(stock_data)
-
-finally:
-    file.close()
-    
+summaryDf.to_csv("processed_stock_summary.csv", index=False)
+print("✅ Stock data processed and saved to 'processed_stock_summary.csv'")
