@@ -48,31 +48,4 @@ try:
 
 finally:
     file.close()
-
-#moving averages
-
-#volatility
-
-#price change
-
-
-
-"""
-
-get stock data, process it like with moving averages
-
-use orcale on particular frames of the data for each stock, moving in each data of each stock
-
-frames consist of :
-
-oracle recieves the most possible optimal figures of stocks
-
-filters the stocks to the optimal stock
-
-chooses via the index of the stock
-
-pe_ratio = stock.info['trailingPE']
-dividend_yield = stock.info['dividendYield']
-market_cap = stock.info['marketCap']
-
-"""
+    

@@ -11,9 +11,7 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 
 def monteCarloPortfolios(numPortfolios, numAssets, numSimulations=100):
-    """
-    Simulate portfolio returns using Monte Carlo sampling.
-    """
+   
     np.random.seed(42)
     means = np.random.normal(0.1, 0.05, numAssets)
     cov = np.random.rand(numAssets, numAssets)
@@ -34,9 +32,7 @@ def monteCarloPortfolios(numPortfolios, numAssets, numSimulations=100):
     return portfolioResults
 
 def getMarkedStates(portfolios, threshold=0.12):
-    """
-    Convert qualifying portfolio indices to bitstrings.
-    """
+    
     marked = []
     numBits = math.ceil(math.log2(len(portfolios)))
     for i, (weights, avgReturn) in enumerate(portfolios):
@@ -46,9 +42,7 @@ def getMarkedStates(portfolios, threshold=0.12):
     return marked
 
 def groverOracle(markedStates):
-    """
-    Constructs a Grover oracle that marks the target bitstrings.
-    """
+   
     if not isinstance(markedStates, list):
         markedStates = [markedStates]
 
@@ -88,10 +82,6 @@ def runGroverSearch(portfolioSim, markedStates, backend):
     counts = result[0].data.meas.get_counts()
 
     return counts, qc
-
-# -----------------------------------------------------
-# Step 5: Run Everything
-# -----------------------------------------------------
 
 def main():
     # Parameters
