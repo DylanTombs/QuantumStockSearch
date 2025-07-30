@@ -6,10 +6,6 @@ from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit_aer.primitives import Estimator as AerEstimator
 from scipy.optimize import minimize
 
-# -----------------------------
-# Helpers
-# -----------------------------
-
 class OptimizerResult:
     def __init__(self):
         self.x = None
@@ -33,10 +29,6 @@ def interpret_expectation_as_weights(expectations):
     norm_weights = raw_weights / np.sum(raw_weights)
     return norm_weights
 
-# -----------------------------
-# Classical Simulation
-# -----------------------------
-
 def monteCarloPortfolios(numPortfolios, stockCsvPath, numSimulations=100, seed=42):
     np.random.seed(seed)
     df = pd.read_csv(stockCsvPath)
@@ -44,7 +36,7 @@ def monteCarloPortfolios(numPortfolios, stockCsvPath, numSimulations=100, seed=4
     means = df['MeanReturn'].values
     stds = df['StdReturn'].values
     numAssets = len(means)
-    cov = np.diag(stds ** 2)  # Replace with real covariance later if needed
+    cov = np.diag(stds ** 2)
 
     portfolioResults = []
     for _ in range(numPortfolios):
@@ -52,7 +44,7 @@ def monteCarloPortfolios(numPortfolios, stockCsvPath, numSimulations=100, seed=4
         returns = []
         for _ in range(numSimulations):
             cumulative_return = 1.0
-            for _ in range(250):  # Trading days
+            for _ in range(250):  
                 ret = np.random.multivariate_normal(means, cov)
                 daily_return = np.dot(weights, ret)
                 cumulative_return *= (1 + daily_return)
@@ -127,10 +119,9 @@ def run_vqe_portfolio_optimization_continuous(means, cov_matrix):
     estimator = AerEstimator()
     optimizer = CustomCOBYLA(maxiter=30)
 
-    print("⚛️ Running VQE on Aer simulator (no real hardware)")
+    print(" Running VQE on Aer simulator")
     result = run_vqe(hamiltonian, ansatz, estimator, optimizer)
 
-    # Use expectation values instead of binary decoding
     expectation_vals = []
     for i in range(num_assets):
         z_pauli = ['I'] * num_assets
@@ -145,10 +136,6 @@ def run_vqe_portfolio_optimization_continuous(means, cov_matrix):
     print(f" Number of parameters: {ansatz.num_parameters}")
 
     return weights
-
-# -----------------------------
-# Main
-# -----------------------------
 
 def sharpe_ratio(return_, risk, rf_rate=0.01):
     return (return_ - rf_rate) / risk if risk != 0 else 0
@@ -169,7 +156,7 @@ def main():
     q_index = closest_portfolio[0]
     q_weights, q_return, q_risk = portfolios[q_index]
 
-    print("\n Quantum Optimal Portfolio (Matched from Classical Set):")
+    print("\n Quantum Optimal Portfolio:")
     for t, w in zip(tickers, np.round(q_weights, 3)):
         print(f"  {t}: {w}")
     print(f" Return: {q_return:.4f}")
