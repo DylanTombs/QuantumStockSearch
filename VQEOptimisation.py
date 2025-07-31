@@ -1,10 +1,18 @@
 import time
 import numpy as np
 import pandas as pd
+import os
 from qiskit.circuit.library import TwoLocal
 from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit_aer.primitives import Estimator as AerEstimator
 from scipy.optimize import minimize
+
+from plot_utils import (
+    plot_return_distribution,
+    plot_risk_return_scatter,
+    plot_quantum_probabilities,
+    plot_weight_comparison
+)
 
 class OptimizerResult:
     def __init__(self):
@@ -135,7 +143,7 @@ def run_vqe_portfolio_optimization_continuous(means, cov_matrix):
     print(f"\n Circuit depth: {result.optimal_circuit.depth()}")
     print(f" Number of parameters: {ansatz.num_parameters}")
 
-    return weights
+    return weights, result
 
 def sharpe_ratio(return_, risk, rf_rate=0.01):
     return (return_ - rf_rate) / risk if risk != 0 else 0
@@ -150,7 +158,7 @@ def main():
     stds = np.array([p[2] for p in portfolios])
     cov_matrix = np.diag(stds**2)
 
-    quantum_weights = run_vqe_portfolio_optimization_continuous(means, cov_matrix)
+    quantum_weights, result = run_vqe_portfolio_optimization_continuous(means, cov_matrix)
 
     closest_portfolio = min(enumerate(all_weights), key=lambda x: np.linalg.norm(x[1] - quantum_weights))
     q_index = closest_portfolio[0]
@@ -170,6 +178,21 @@ def main():
     print(f" Return: {c_return:.4f}")
     print(f" Risk: {c_risk:.4f}")
     print(f" Sharpe: {sharpe_ratio(c_return, c_risk):.4f}")
+
+
+    os.makedirs("results", exist_ok=True)
+
+    # Extract classical metrics
+    classical_returns = [p[1] for p in portfolios]
+    classical_risks = [p[2] for p in portfolios]
+
+    # Visualizations
+    plot_return_distribution(classical_returns, q_return)
+    plot_risk_return_scatter(classical_risks, classical_returns, q_risk, q_return)
+    plot_quantum_probabilities(abs(Statevector(result.optimal_circuit).data)**2)
+    plot_weight_comparison(q_weights, c_weights, tickers)
+
+    print("\n📊 Plots saved to ./results/")
 
     print(f"\n Total runtime: {time.time() - start_time:.2f} seconds")
 
