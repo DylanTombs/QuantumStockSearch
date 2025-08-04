@@ -192,7 +192,7 @@ def main():
     plot_quantum_probabilities(abs(Statevector(result.optimal_circuit).data)**2)
     plot_weight_comparison(q_weights, c_weights, tickers)
 
-    print("\n📊 Plots saved to ./results/")
+    print("\nPlots saved to ./results/")
 
     print(f"\n Total runtime: {time.time() - start_time:.2f} seconds")
 
