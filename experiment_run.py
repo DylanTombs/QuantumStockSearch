@@ -46,8 +46,11 @@ def run_experiment(num_assets=5, num_portfolios=10, reps=1, risk_aversion=0.5, s
     q_weights, result = run_vqe_portfolio_optimization_continuous(means, cov_matrix)
     q_runtime = time.time() - start
 
-    q_return = np.dot(q_weights, means)
-    q_risk = np.sqrt(q_weights @ cov_matrix @ q_weights)
+    q_return_daily = np.dot(q_weights, means)
+    q_return = q_return_daily * 250  # annualized
+
+    q_risk_daily = np.sqrt(q_weights @ cov_matrix @ q_weights)
+    q_risk = q_risk_daily * np.sqrt(250)  # annualized
 
 
     print(f"Quantum return: {q_return:.4f}, Quantum risk: {q_risk:.4f}")
@@ -90,7 +93,7 @@ if __name__ == "__main__":
     experiments = []
     for num_assets in [3, 4, 5]:
         for num_portfolios in [10, 20, 50]:
-            for reps in [1, 2]:
+            for reps in [2,3,4]:
                 for risk_aversion in [0.3, 0.5, 0.8]:
                     exp_id = f"n{num_assets}_p{num_portfolios}_r{reps}_a{int(risk_aversion*10)}"
                     experiments.append({
@@ -108,5 +111,5 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(results)
     os.makedirs("experiments", exist_ok=True)
-    df.to_csv("experiments/experiment_results.csv", index=False)
+    df.to_csv("experiments/experiment_results3.csv", index=False)
     print("\nAll experiments complete. Saved to experiments/experiment_results.csv")

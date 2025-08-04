@@ -1,10 +1,13 @@
-import time
 import numpy as np
 import pandas as pd
+import time
 import os
-from qiskit.circuit.library import TwoLocal
+
 from qiskit.quantum_info import SparsePauliOp, Statevector
-from qiskit_aer.primitives import Estimator as AerEstimator
+from qiskit.circuit.library import TwoLocal
+from qiskit.primitives import BackendEstimatorV2
+from qiskit_aer import AerSimulator
+from qiskit import transpile
 from scipy.optimize import minimize
 
 from plot_utils import (
@@ -13,6 +16,8 @@ from plot_utils import (
     plot_quantum_probabilities,
     plot_weight_comparison
 )
+
+# --- Optimizer Classes ---
 
 class OptimizerResult:
     def __init__(self):
@@ -32,10 +37,13 @@ class CustomCOBYLA:
         opt_result.nfev = result.nfev
         return opt_result
 
+# --- Portfolio Utilities ---
+
 def interpret_expectation_as_weights(expectations):
     raw_weights = 0.5 * (1 - np.array(expectations))  # Z=+1 → 0, Z=−1 → 1
-    norm_weights = raw_weights / np.sum(raw_weights)
-    return norm_weights
+    weights = np.clip(raw_weights, 0, None)
+    weights /= np.sum(weights) if np.sum(weights) != 0 else 1
+    return weights
 
 def monteCarloPortfolios(numPortfolios, stockCsvPath, numSimulations=100, seed=42):
     np.random.seed(seed)
@@ -52,7 +60,7 @@ def monteCarloPortfolios(numPortfolios, stockCsvPath, numSimulations=100, seed=4
         returns = []
         for _ in range(numSimulations):
             cumulative_return = 1.0
-            for _ in range(250):  
+            for _ in range(250):
                 ret = np.random.multivariate_normal(means, cov)
                 daily_return = np.dot(weights, ret)
                 cumulative_return *= (1 + daily_return)
@@ -65,15 +73,15 @@ def monteCarloPortfolios(numPortfolios, stockCsvPath, numSimulations=100, seed=4
     return portfolioResults, df['Stock'].tolist()
 
 def classicalMaxPortfolio(portfolios):
-    return max(enumerate(portfolios), key=lambda x: x[1][1])  # (index, (weights, return, std))
+    return max(enumerate(portfolios), key=lambda x: x[1][1])  # max by return
 
-# -----------------------------
-# Quantum
-# -----------------------------
+def sharpe_ratio(return_, risk, rf_rate=0.01):
+    return float((return_ - rf_rate) / risk) if risk != 0 else 0.0
+
+# --- Quantum Portfolio Optimization ---
 
 def create_portfolio_hamiltonian(means, cov_matrix, risk_aversion=0.5):
     num_assets = len(means)
-
     return_terms = []
     for i in range(num_assets):
         pauli = ['I'] * num_assets
@@ -96,23 +104,34 @@ def create_portfolio_hamiltonian(means, cov_matrix, risk_aversion=0.5):
 
 def run_vqe(hamiltonian, ansatz, estimator, optimizer, callback=None):
     def cost_function(params):
-        bound_circuit = ansatz.assign_parameters(params)
-        job = estimator.run(bound_circuit, hamiltonian)
-        result = job.result()
-        expval = result.values[0]
-        if callback:
-            callback(params, expval)
-        return expval
+        try:
+            # Assign parameters to the circuit
+            bound_circuit = ansatz.assign_parameters(params)
+            
+            # Run without passing parameters again (they're already bound)
+            job = estimator.run([(bound_circuit, hamiltonian)])
+            result = job.result()
+            expval = result[0].data.evs.item()
+            
+            if callback:
+                callback(params, expval)
+            return expval
+        except Exception as e:
+            print(f"Error in cost function: {str(e)}")
+            return np.inf  # Return high cost if evaluation fails
 
+    # Initialize random parameters matching the ansatz
     x0 = np.random.random(ansatz.num_parameters)
     result = optimizer.minimize(cost_function, x0)
+    
+    # Create final results
     optimal_circuit = ansatz.assign_parameters(result.x)
-    job = estimator.run(optimal_circuit, hamiltonian)
-    final_result = job.result()
+    final_job = estimator.run([(optimal_circuit, hamiltonian)])
+    final_energy = final_job.result()[0].data.evs.item()
 
     class VQEResult:
         def __init__(self):
-            self.eigenvalue = final_result.values[0]
+            self.eigenvalue = final_energy
             self.optimal_parameters = result.x
             self.optimal_circuit = optimal_circuit
 
@@ -121,37 +140,31 @@ def run_vqe(hamiltonian, ansatz, estimator, optimizer, callback=None):
 def run_vqe_portfolio_optimization_continuous(means, cov_matrix, risk_aversion=0.5, reps=1):
     hamiltonian = create_portfolio_hamiltonian(means, cov_matrix, risk_aversion)
     num_assets = len(means)
-    ansatz = TwoLocal(num_assets, 'ry', 'cz', reps=reps, entanglement='linear')
+    ansatz = TwoLocal(num_assets, 'ry', 'cz', reps=reps, entanglement='linear',insert_barriers=True)
 
-    estimator = AerEstimator()
-    optimizer = CustomCOBYLA(maxiter=50)
+    print(f"Circuit has {ansatz.num_parameters} parameters")
+    print(f"Circuit depth: {ansatz.decompose().depth()}")
 
-    print(" Running VQE on Aer simulator")
-    result = run_vqe(hamiltonian, ansatz, estimator, optimizer)
+    estimator = BackendEstimatorV2(backend=AerSimulator())
+    optimizer = CustomCOBYLA(maxiter=250)
 
-    # Extract Z expectation values for each qubit
+    transpiled_ansatz = transpile(ansatz, backend=estimator.backend)
+    result = run_vqe(hamiltonian, transpiled_ansatz, estimator, optimizer)
+
     expectation_vals = []
     for i in range(num_assets):
         z_pauli = ['I'] * num_assets
         z_pauli[i] = 'Z'
         op = SparsePauliOp(''.join(z_pauli), coeffs=[1.0])
-        val = estimator.run(result.optimal_circuit, op).result().values[0]
+        job = estimator.run([(result.optimal_circuit, op)])
+        val = job.result()[0].data.evs.item()
         expectation_vals.append(val)
 
-    # Interpret into weights
-    raw_weights = interpret_expectation_as_weights(expectation_vals)
-    weights = np.maximum(raw_weights, 0)
-    weights /= np.sum(weights)  # Normalize
-
-    print(f"\n Circuit depth: {result.optimal_circuit.depth()}")
-    print(f" Number of parameters: {ansatz.num_parameters}")
+    weights = interpret_expectation_as_weights(expectation_vals)
 
     return weights, result
 
-def sharpe_ratio(return_, risk, rf_rate=0.01):
-    return float((return_ - rf_rate) / risk) if risk != 0 else 0.0
-
-
+# --- Main Execution ---
 
 def main():
     start_time = time.time()
@@ -165,8 +178,7 @@ def main():
 
     quantum_weights, result = run_vqe_portfolio_optimization_continuous(means, cov_matrix)
 
-    closest_portfolio = min(enumerate(all_weights), key=lambda x: np.linalg.norm(x[1] - quantum_weights))
-    q_index = closest_portfolio[0]
+    q_index, _ = min(enumerate(all_weights), key=lambda x: np.linalg.norm(x[1] - quantum_weights))
     q_weights, q_return, q_risk = portfolios[q_index]
 
     print("\n Quantum Optimal Portfolio:")
@@ -184,25 +196,22 @@ def main():
     print(f" Risk: {c_risk:.4f}")
     print(f" Sharpe: {sharpe_ratio(c_return, c_risk):.4f}")
 
-
     os.makedirs("results", exist_ok=True)
 
-    # Extract classical metrics
     classical_returns = [p[1] for p in portfolios]
     classical_risks = [p[2] for p in portfolios]
 
-    # Visualizations
     plot_return_distribution(classical_returns, q_return)
     plot_risk_return_scatter(classical_risks, classical_returns, q_risk, q_return)
     plot_quantum_probabilities(abs(Statevector(result.optimal_circuit).data)**2)
     plot_weight_comparison(q_weights, c_weights, tickers)
 
     print("\nPlots saved to ./results/")
-
     print(f"\n Total runtime: {time.time() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
+
 
 
 
