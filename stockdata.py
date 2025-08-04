@@ -13,6 +13,7 @@ csvFiles = glob.glob(os.path.join(dataFolder, "*.csv"))
 # For each stock CSV, extract stats
 for file in csvFiles:
     stockName = os.path.basename(file).replace(".csv", "")
+    print(f"Processing: {stockName}")
     df = pd.read_csv(file, parse_dates=["date"])
 
     df.sort_values("date", inplace=True)
@@ -49,4 +50,4 @@ summaryDf = pd.DataFrame(summaryData, columns=[
 ])
 
 summaryDf.to_csv("processed_stock_summary.csv", index=False)
-print("✅ Stock data processed and saved to 'processed_stock_summary.csv'")
+print("Stock data processed and saved to 'processed_stock_summary.csv'")
