@@ -1,4 +1,4 @@
-experiment_id,num_assets,num_portfolios,risk_aversion,ansatz_reps,quantum_return,quantum_risk,quantum_sharpe,classical_return,classical_risk,classical_sharpe,vqe_runtime_sec,depth,parameters
+exp_id,num_assets,num_portfolios,risk_aversion,ansatz_reps,quantum_return,quantum_risk,quantum_sharpe,classical_return,classical_risk,classical_sharpe,vqe_runtime_sec,depth,parameters
 n3_p10_r1_a3,3,10,0.3,1,0.0003627613963395961,0.014850861430644702,-0.6489346526238535,0.1010197778866448,0.15343642331546037,0.5932084176617638,1.902,1,0
 n3_p10_r1_a5,3,10,0.5,1,0.0003627613963395961,0.014850861430644702,-0.6489346526238535,0.1010197778866448,0.15343642331546037,0.5932084176617638,1.362,1,0
 n3_p10_r1_a8,3,10,0.8,1,0.0003356762344271674,0.012240300520506422,-0.7895495498155456,0.1010197778866448,0.15343642331546037,0.5932084176617638,1.31,1,0

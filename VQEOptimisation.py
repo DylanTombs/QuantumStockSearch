@@ -118,18 +118,18 @@ def run_vqe(hamiltonian, ansatz, estimator, optimizer, callback=None):
 
     return VQEResult()
 
-def run_vqe_portfolio_optimization_continuous(means, cov_matrix):
-
-    hamiltonian = create_portfolio_hamiltonian(means, cov_matrix)
+def run_vqe_portfolio_optimization_continuous(means, cov_matrix, risk_aversion=0.5, reps=1):
+    hamiltonian = create_portfolio_hamiltonian(means, cov_matrix, risk_aversion)
     num_assets = len(means)
-    ansatz = TwoLocal(num_assets, 'ry', 'cz', reps=1, entanglement='linear')
+    ansatz = TwoLocal(num_assets, 'ry', 'cz', reps=reps, entanglement='linear')
 
     estimator = AerEstimator()
-    optimizer = CustomCOBYLA(maxiter=30)
+    optimizer = CustomCOBYLA(maxiter=50)
 
     print(" Running VQE on Aer simulator")
     result = run_vqe(hamiltonian, ansatz, estimator, optimizer)
 
+    # Extract Z expectation values for each qubit
     expectation_vals = []
     for i in range(num_assets):
         z_pauli = ['I'] * num_assets
@@ -138,7 +138,10 @@ def run_vqe_portfolio_optimization_continuous(means, cov_matrix):
         val = estimator.run(result.optimal_circuit, op).result().values[0]
         expectation_vals.append(val)
 
-    weights = interpret_expectation_as_weights(expectation_vals)
+    # Interpret into weights
+    raw_weights = interpret_expectation_as_weights(expectation_vals)
+    weights = np.maximum(raw_weights, 0)
+    weights /= np.sum(weights)  # Normalize
 
     print(f"\n Circuit depth: {result.optimal_circuit.depth()}")
     print(f" Number of parameters: {ansatz.num_parameters}")
@@ -146,7 +149,9 @@ def run_vqe_portfolio_optimization_continuous(means, cov_matrix):
     return weights, result
 
 def sharpe_ratio(return_, risk, rf_rate=0.01):
-    return (return_ - rf_rate) / risk if risk != 0 else 0
+    return float((return_ - rf_rate) / risk) if risk != 0 else 0.0
+
+
 
 def main():
     start_time = time.time()

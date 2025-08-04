@@ -46,10 +46,8 @@ def run_experiment(num_assets=5, num_portfolios=10, reps=1, risk_aversion=0.5, s
     q_weights, result = run_vqe_portfolio_optimization_continuous(means, cov_matrix)
     q_runtime = time.time() - start
 
-    # Closest simulated portfolio to VQE weights
-    closest_weights = min(all_weights, key=lambda w: np.linalg.norm(w - q_weights))
-    q_return = np.dot(means, closest_weights)
-    q_risk = np.sqrt(np.dot(closest_weights.T, np.dot(cov_matrix, closest_weights)))
+    q_return = np.dot(q_weights, means)
+    q_risk = np.sqrt(q_weights @ cov_matrix @ q_weights)
 
 
     print(f"Quantum return: {q_return:.4f}, Quantum risk: {q_risk:.4f}")
@@ -69,7 +67,7 @@ def run_experiment(num_assets=5, num_portfolios=10, reps=1, risk_aversion=0.5, s
         print(f"Skipped quantum probability plot: {e}")
 
     result_row = {
-        "experiment_id": exp_id,
+        "exp_id": exp_id,
         "num_assets": num_assets,
         "num_portfolios": num_portfolios,
         "risk_aversion": risk_aversion,
