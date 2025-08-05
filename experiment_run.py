@@ -91,9 +91,9 @@ def run_experiment(num_assets=5, num_portfolios=10, reps=1, risk_aversion=0.5, s
 
 if __name__ == "__main__":
     experiments = []
-    for num_assets in [3, 4, 5]:
-        for num_portfolios in [10, 20, 50]:
-            for reps in [2,3,4]:
+    for num_assets in [4, 8, 12, 16]:
+        for num_portfolios in [50, 100, 150, 200]:
+            for reps in [2,3]:
                 for risk_aversion in [0.3, 0.5, 0.8]:
                     exp_id = f"n{num_assets}_p{num_portfolios}_r{reps}_a{int(risk_aversion*10)}"
                     experiments.append({
@@ -111,5 +111,5 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(results)
     os.makedirs("experiments", exist_ok=True)
-    df.to_csv("experiments/experiment_results3.csv", index=False)
+    df.to_csv("experiments/experiment_results4.csv", index=False)
     print("\nAll experiments complete. Saved to experiments/experiment_results.csv")

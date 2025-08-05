@@ -4,7 +4,7 @@ import seaborn as sns
 import os
 
 # Load results
-df = pd.read_csv("experiments/experiment_results3.csv")
+df = pd.read_csv("experiments/experiment_results4.csv")
 
 # Create output folder
 os.makedirs("analysis", exist_ok=True)
@@ -18,7 +18,7 @@ plt.axhline(0, linestyle='--', color='red')
 plt.title("Quantum - Classical Sharpe Ratio by Number of Assets")
 plt.ylabel("Sharpe Ratio Improvement")
 plt.xlabel("Number of Assets")
-plt.savefig("analysis/analysis3/sharpe_diff_by_assets.png")
+plt.savefig("analysis/analysis4/sharpe_diff_by_assets.png")
 plt.close()
 
 # === 2. Runtime Comparison ===
@@ -28,7 +28,7 @@ plt.xticks(rotation=45, ha="right")
 plt.title("Quantum VQE Runtime per Experiment")
 plt.ylabel("Time (s)")
 plt.tight_layout()
-plt.savefig("analysis/analysis3/vqe_runtime_by_experiment.png")
+plt.savefig("analysis/analysis4/vqe_runtime_by_experiment.png")
 plt.close()
 
 # === 3. Sharpe Ratio Heatmap (Quantum vs Risk Aversion and Ansatz reps) ===
@@ -36,7 +36,7 @@ pivot = df.pivot_table(index='risk_aversion', columns='ansatz_reps', values='qua
 plt.figure(figsize=(8, 6))
 sns.heatmap(pivot, annot=True, fmt=".2f", cmap="YlGnBu")
 plt.title("Quantum Sharpe Ratio: Risk Aversion vs Ansatz Reps")
-plt.savefig("analysis/analysis3/sharpe_heatmap.png")
+plt.savefig("analysis/analysis4/sharpe_heatmap.png")
 plt.close()
 
 # === 4. Return vs Risk Scatter ===
@@ -47,7 +47,7 @@ plt.title("Risk vs Return: Quantum vs Classical")
 plt.xlabel("Risk (std dev)")
 plt.ylabel("Return")
 plt.legend()
-plt.savefig("analysis/analysis3/risk_return_comparison.png")
+plt.savefig("analysis/analysis4/risk_return_comparison.png")
 plt.close()
 
-print("Analysis complete. Visuals saved in analysis/analysis3/")
+print("Analysis complete. Visuals saved in analysis/analysis4/")
