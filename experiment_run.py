@@ -253,7 +253,7 @@ def run_experiment(
             return super().default(obj)
 
     os.makedirs("results", exist_ok=True)
-    with open(f"trial/{exp_id}.json", "w") as f:
+    with open(f"experiments/{exp_id}.json", "w") as f:
         json.dump(result_row, f, indent=2, cls=NumpyEncoder)
     
     logging.info(f"Completed Experiment {exp_id}")
@@ -272,11 +272,11 @@ def main():
     """Run a comprehensive parameter sweep with parallel execution."""
     # Define experiment grid
     parameter_grid = {
-        'num_assets': [3],
-        'num_portfolios': [100, 500],
-        'reps': [1],
+        'num_assets': [3,4,5,6],
+        'num_portfolios': [100, 250, 500],
+        'reps': [1,2,3],
         'risk_aversion': [0.2, 0.5, 0.8],
-        'seed': [123]
+        'seed': [45,123,256]
     }
     
     # Generate all combinations
@@ -308,8 +308,8 @@ def main():
     
     # Save consolidated results
     df = pd.json_normalize(successful_results)
-    df.to_csv("trial/consolidated_results.csv", index=False)
-    logging.info("Saved consolidated results to trial/consolidated_results.csv")
+    df.to_csv("experiments/consolidated_results.csv", index=False)
+    logging.info("Saved consolidated results to experiments/consolidated_results.csv")
 
 if __name__ == "__main__":
     main()
