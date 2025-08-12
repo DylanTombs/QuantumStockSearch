@@ -1,0 +1,93 @@
+{
+  "experiment_id": "3ad46263",
+  "timestamp": "2025-08-11T22:01:43.313601",
+  "parameters": {
+    "num_assets": 3,
+    "num_portfolios": 250,
+    "ansatz_reps": 1,
+    "risk_aversion": 0.2,
+    "random_seed": 123
+  },
+  "tickers": [
+    "V",
+    "C",
+    "BAC"
+  ],
+  "quantum": {
+    "return": 0.3402,
+    "risk": 1.0717448920617068,
+    "sharpe_ratio": 0.3080957067729028,
+    "var": -1.422663472874412,
+    "cvar": -1.8705019152363478,
+    "max_drawdown": 2.679362230154267,
+    "optimal_value": null,
+    "optimiser_evals": 0,
+    "optimiser_time": 1.0049641132354736,
+    "circuit_metrics": {
+      "depth": 4,
+      "num_parameters": 6,
+      "gate_counts": {
+        "ry": 6,
+        "barrier": 2,
+        "cz": 2
+      }
+    },
+    "state_metrics": {
+      "max_prob_state": 0.9988130175085538,
+      "entropy": 0.010304143480085574,
+      "num_significant_states": 1
+    },
+    "weights": [
+      0.5,
+      0.5,
+      0.0
+    ]
+  },
+  "classical": {
+    "monte_carlo": {
+      "return": 0.47494042071968656,
+      "risk": 1.9567233726366295,
+      "sharpe_ratio": 0.2376117274529166,
+      "var": -2.74358311570239,
+      "cvar": -3.5612179407670173,
+      "max_drawdown": 4.891808431591574
+    },
+    "mean_variance": {
+      "return": 0.17571440840111416,
+      "risk": 0.3418361726230619,
+      "sharpe_ratio": 0.4847772754109472,
+      "var": -0.3865560599611386,
+      "cvar": -0.5293954429377953,
+      "max_drawdown": 0.8545904315576547
+    }
+  },
+  "data_stats": {
+    "mean_returns": [
+      0.0007,
+      0.002,
+      0.0004
+    ],
+    "return_stds": [
+      0.022,
+      0.1343,
+      0.0305
+    ],
+    "cov_matrix": [
+      [
+        0.00048399999999999995,
+        -0.0001440774312669895,
+        4.179303073729718e-05
+      ],
+      [
+        -0.0001440774312669895,
+        0.018036490000000002,
+        0.00013263685810295953
+      ],
+      [
+        4.179303073729718e-05,
+        0.00013263685810295953,
+        0.00093025
+      ]
+    ]
+  }
+}
