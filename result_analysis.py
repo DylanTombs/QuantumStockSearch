@@ -11,7 +11,7 @@ plt.style.use('seaborn-v0_8')
 sns.set_theme(style="whitegrid", palette="husl")
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['font.size'] = 10
-os.makedirs("analysis/trial", exist_ok=True)
+os.makedirs("analysis/analysis5", exist_ok=True)
 
 # Load and preprocess CSV data
 def load_consolidated_results(csv_path: str) -> pd.DataFrame:
@@ -31,7 +31,7 @@ def load_consolidated_results(csv_path: str) -> pd.DataFrame:
     
     return df
 
-df = load_consolidated_results("trial/consolidated_results.csv")
+df = load_consolidated_results("experiments/consolidated_results.csv")
 
 # 1. Performance Differential Analysis
 def performance_differential_analysis(df: pd.DataFrame):
@@ -61,7 +61,7 @@ def performance_differential_analysis(df: pd.DataFrame):
         })
     
     stats_df = pd.DataFrame(results)
-    stats_df.to_csv("analysis/trial/performance_significance.csv", index=False)
+    stats_df.to_csv("analysis/analysis5/performance_significance.csv", index=False)
     
     # Visualization
     plt.figure(figsize=(14, 6))
@@ -81,7 +81,7 @@ def performance_differential_analysis(df: pd.DataFrame):
     
     plt.suptitle("Performance Differential Analysis", y=1.02)
     plt.tight_layout()
-    plt.savefig("analysis/trial/performance_comparison.png", bbox_inches='tight')
+    plt.savefig("analysis/analysis5/performance_comparison.png", bbox_inches='tight')
     plt.close()
 
 # 2. Portfolio Composition Analysis
@@ -93,7 +93,7 @@ def portfolio_composition_analysis(df: pd.DataFrame):
                hue='parameters.risk_aversion', data=df)
     plt.title("Portfolio Concentration (Herfindahl Index)")
     plt.ylabel("Concentration (0=diversified, 1=concentrated)")
-    plt.savefig("analysis/trial/portfolio_concentration.png", bbox_inches='tight')
+    plt.savefig("analysis/analysis5/portfolio_concentration.png", bbox_inches='tight')
     plt.close()
     
     # Weight distribution examples
@@ -104,7 +104,7 @@ def portfolio_composition_analysis(df: pd.DataFrame):
     plt.figure(figsize=(10, 6))
     plt.pie(example_weights, labels=example_tickers, autopct='%1.1f%%')
     plt.title(f"Portfolio Weights Example (Exp {example_exp})")
-    plt.savefig("analysis/trial/portfolio_weights_example.png", bbox_inches='tight')
+    plt.savefig("analysis/analysis5/portfolio_weights_example.png", bbox_inches='tight')
     plt.close()
 
 # 3. Risk-Return Tradeoff Analysis
@@ -128,7 +128,7 @@ def risk_return_analysis(df: pd.DataFrame):
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1.0))
     plt.grid(True, alpha=0.3)
     plt.legend()
-    plt.savefig("analysis/trial/risk_return_tradeoff.png", bbox_inches='tight')
+    plt.savefig("analysis/analysis5/risk_return_tradeoff.png", bbox_inches='tight')
     plt.close()
 
 # 4. Quantum Circuit Analysis
@@ -149,7 +149,7 @@ def quantum_metrics_analysis(df: pd.DataFrame):
     axes[1].set_title("State Entropy vs Sharpe Ratio")
     
     # Runtime analysis
-    sns.regplot(x='parameters.num_assets', y='quantum.optimizer_time', 
+    sns.regplot(x='parameters.num_assets', y='quantum.optimiser_time', 
            data=df, ax=axes[2], order=1, ci=95)
     axes[2].set_title("Optimisation Time Scaling")
     axes[2].set_xlabel("Number of Assets")
@@ -157,7 +157,7 @@ def quantum_metrics_analysis(df: pd.DataFrame):
     
     plt.suptitle("Quantum Performance Metrics", y=1.05)
     plt.tight_layout()
-    plt.savefig("analysis/trial/quantum_metrics.png", bbox_inches='tight')
+    plt.savefig("analysis/analysis5/quantum_metrics.png", bbox_inches='tight')
     plt.close()
 
 # 5. Risk Metrics Comparison
@@ -177,7 +177,7 @@ def risk_metrics_analysis(df: pd.DataFrame):
     
     plt.suptitle("Risk Metrics Comparison Across Methods", y=1.02)
     plt.tight_layout()
-    plt.savefig("analysis/trial/risk_metrics_comparison.png", bbox_inches='tight')
+    plt.savefig("analysis/analysis5/risk_metrics_comparison.png", bbox_inches='tight')
     plt.close()
 
 # Execute all analyses
